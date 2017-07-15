@@ -1,0 +1,36 @@
+---
+- name: nxos
+  hosts: n9k
+  gather_facts: no
+
+  tasks:
+    - name: obtain login credentials
+      include_vars: secrets.yml
+
+    - name: "define provider"
+      set_fact:
+          provider:
+            nxapi:
+              host: "{{ ansible_ssh_host }}"
+              username: "{{ creds['user'] }}"
+              password: "{{ creds['pwd'] }}"
+              transport: nxapi
+              use_ssl: yes
+              validate_certs: no
+              port: "{{ ansible_nxapi_port }}"
+
+            ssh:
+              host: "{{ ansible_ssh_host }}"
+              username: "{{ creds['user'] }}"
+              password: "{{ creds['pwd'] }}"
+              transport: cli
+
+    - name: get nxos facts via nxapi
+      nxos_facts:
+        provider: "{{ provider['nxapi'] }}"
+        gather_subset:
+          - "interfaces"
+      register: nxfacts_nxapi
+
+    - name: print facts
+      debug: msg="{{ nxfacts_nxapi.ansible_facts.ansible_net_neighbors }}"
